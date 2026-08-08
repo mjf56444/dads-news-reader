@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Today's News</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F3EA; --card:#FFFFFF; --ink:#1B1B18; --muted:#5A5A52;
+    --line:#E4DCCC; --forward:#1D4E89; --forward-press:#163C6B; --focus:#8A5B00;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.45;
+    display:flex;flex-direction:column;height:100%;overflow:hidden;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  }
+  a{pointer-events:none;text-decoration:none;color:inherit;}
+
+  header{
+    flex:0 0 auto;padding:20px 32px 16px;border-bottom:2px solid var(--line);
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  }
+  .app-name{font-weight:700;font-size:clamp(22px,2.6vw,28px);}
+  .today{color:var(--muted);font-size:clamp(18px,2.2vw,24px);}
+  main{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+  .mosaic{
+    display:grid;gap:22px;padding:26px 32px 40px;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    max-width:1240px;margin:0 auto;
+  }
+  .tile{
+    background:var(--card);border:2px solid var(--line);border-radius:20px;overflow:hidden;
+    text-align:left;cursor:pointer;font-family:inherit;color:inherit;padding:0;
+    display:flex;flex-direction:column;
+    transition:transform .06s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .tile:hover{border-color:#C9BEA6;box-shadow:0 6px 20px rgba(0,0,0,.08);}
+  .tile:active{transform:scale(.985);}
+  .tile:focus-visible{outline:5px solid var(--focus);outline-offset:3px;}
+  .thumb{height:170px;background:linear-gradient(135deg,#E7DEC9,#D8CBAE);position:relative;overflow:hidden;}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .tile-text{padding:16px 18px 20px;}
+  .tile-source{color:var(--muted);font-size:16px;font-weight:700;margin-bottom:8px;}
+  .tile-headline{font-size:clamp(20px,1.9vw,23px);font-weight:700;line-height:1.28;}
+
+  .story-wrap{max-width:820px;margin:0 auto;padding:20px 40px 40px;}
+  .allstories{
+    display:inline-flex;align-items:center;gap:10px;margin-top:8px;
+    padding:12px 22px;min-height:56px;background:transparent;border:3px solid var(--line);
+    border-radius:14px;font-family:inherit;font-size:20px;font-weight:700;color:var(--ink);cursor:pointer;
+  }
+  .allstories:active{background:#EDE6D6;}
+  .allstories:focus-visible{outline:5px solid var(--focus);outline-offset:3px;}
+  .hero{height:300px;border-radius:20px;margin:22px 0 26px;overflow:hidden;
+        background:linear-gradient(135deg,#E7DEC9,#D8CBAE);}
+  .hero img{width:100%;height:100%;object-fit:cover;display:block;}
+  .eyebrow{color:var(--muted);font-size:clamp(18px,2vw,22px);font-weight:700;margin-bottom:12px;}
+  h1.headline{font-size:clamp(30px,4.4vw,46px);line-height:1.2;margin:0 0 10px;}
+  .byline{color:var(--muted);font-size:clamp(17px,1.9vw,21px);margin:0 0 24px;}
+  .body{font-size:clamp(23px,2.7vw,28px);line-height:1.62;}
+  .body p{margin:0 0 20px;}
+  .body h2,.body h3{font-size:clamp(24px,3vw,32px);margin:30px 0 14px;}
+  .body blockquote{margin:24px 0;padding:8px 0 8px 24px;border-left:5px solid var(--line);color:#3a3a34;font-style:italic;}
+  .body ul,.body ol{padding-left:1.2em;margin:0 0 20px;}
+  .body li{margin:0 0 10px;}
+  .body img{max-width:100%;height:auto;border-radius:14px;margin:8px 0 4px;}
+
+  .more{
+    display:flex;align-items:center;justify-content:center;gap:14px;width:100%;margin-top:20px;
+    min-height:104px;background:var(--forward);color:#fff;border:none;border-radius:18px;
+    font-family:inherit;font-size:clamp(23px,2.8vw,30px);font-weight:700;cursor:pointer;
+    transition:transform .05s ease, background .12s ease;touch-action:manipulation;
+  }
+  .more:active{transform:scale(.99);background:var(--forward-press);}
+  .more:focus-visible{outline:5px solid var(--focus);outline-offset:3px;}
+  .icon{line-height:1;}
+
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;
+          text-align:center;height:100%;padding:40px;gap:18px;}
+  .center h2{font-size:clamp(26px,3.4vw,36px);margin:0;}
+  .center p{font-size:clamp(20px,2.4vw,26px);color:var(--muted);max-width:640px;margin:0;}
+  .spinner{width:64px;height:64px;border-radius:50%;border:7px solid var(--line);
+           border-top-color:var(--forward);animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .setup{max-width:640px;margin:0 auto;padding:40px;}
+  .setup h2{font-size:clamp(24px,3vw,32px);margin:0 0 14px;}
+  .setup p{font-size:19px;color:var(--muted);line-height:1.55;margin:0 0 18px;}
+  .setup .warn{color:#9a3b2e;font-weight:700;}
+  .setup code{background:#EDE6D6;padding:2px 8px;border-radius:6px;user-select:text;-webkit-user-select:text;}
+  .setup input{width:100%;font-family:inherit;font-size:20px;padding:16px;border:2px solid var(--line);
+               border-radius:12px;margin-bottom:16px;user-select:text;-webkit-user-select:text;}
+  .setup button{width:100%;min-height:72px;background:var(--forward);color:#fff;border:none;border-radius:14px;
+                font-family:inherit;font-size:22px;font-weight:700;cursor:pointer;}
+  .setup button:active{background:var(--forward-press);}
+
+  .fade{animation:fade .28s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){.fade{animation:none;}.tile,.more{transition:none;}.spinner{animation:none;}}
+
+  @media (max-width:640px){
+    header{padding:16px 18px 12px;}
+    .mosaic{padding:18px 16px 32px;gap:16px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+    .thumb{height:120px;}
+    .story-wrap{padding:14px 20px 32px;}
+    .hero{height:210px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="app-name">Today&rsquo;s News</span>
+    <span class="today" id="today"></span>
+  </header>
+  <main id="stage"></main>
+
+<script>
+/* =======================================================================
+   CONFIG  —  the only part you edit.
+   1) Get a FREE key at:  https://open-platform.theguardian.com/access
+   2) Paste it between the quotes below, then host this file.
+   (If you leave the placeholder, the app shows a one-time setup screen
+    where the key can be pasted instead — handy for trying it out.)
+======================================================================= */
+const GUARDIAN_API_KEY = "PASTE_YOUR_FREE_GUARDIAN_KEY_HERE";
+
+const TILE_COUNT      = 12;
+const REFRESH_MINUTES = 30;
+
+// Each topic pulls `take` newest stories — a bigger `take` puts more of that
+// topic in the mosaic. Add  office:"us"  to a section to bias it to the US desk.
+// Reorder, change the numbers, or add/remove lines to taste.
+const SECTIONS = [
+  {id:"us-news",     label:"US News",     take:3},
+  {id:"world",       label:"World",       take:3},
+  {id:"business",    label:"Business",    take:1},
+  {id:"science",     label:"Science",     take:1},
+  {id:"technology",  label:"Technology",  take:1},
+  {id:"environment", label:"Environment", take:1},
+  {id:"society",     label:"Society",     take:1},
+  {id:"sport",       label:"Sport",       take:1, office:"us"},
+  {id:"food",        label:"Food",        take:1}
+];
+/* ===================================================================== */
+
+const stage = document.getElementById('stage');
+let apiKey = null;
+let sessionKey = null;
+let cache = { items: [], fetchedAt: 0 };
+let view = 'loading';
+
+(function(){
+  const d = new Date();
+  document.getElementById('today').textContent =
+    d.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+})();
+
+/* ---------- API key handling ---------- */
+async function resolveKey(){
+  if (GUARDIAN_API_KEY && GUARDIAN_API_KEY !== "PASTE_YOUR_FREE_GUARDIAN_KEY_HERE"){
+    apiKey = GUARDIAN_API_KEY.trim(); return apiKey;
+  }
+  if (sessionKey){ apiKey = sessionKey; return apiKey; }
+  try{
+    const stored = window.localStorage.getItem('guardian_key');
+    if(stored){ apiKey = stored; sessionKey = stored; return apiKey; }
+  }catch(e){}
+  return null;
+}
+async function saveKey(k){
+  apiKey = k.trim(); sessionKey = apiKey;
+  try{ window.localStorage.setItem('guardian_key', apiKey); }catch(e){}
+}
+async function clearKey(){
+  apiKey = null; sessionKey = null;
+  try{ window.localStorage.removeItem('guardian_key'); }catch(e){}
+}
+
+/* ---------- fetching ---------- */
+function pickImage(r, target){
+  const els = r.elements || [];
+  const img = els.find(e=>e.type==='image' && e.relation==='main') || els.find(e=>e.type==='image');
+  if(!img || !img.assets || !img.assets.length) return null;
+  let best=null, diff=Infinity;
+  img.assets.forEach(a=>{
+    const w = a.typeData && a.typeData.width ? Number(a.typeData.width) : 0;
+    const d = Math.abs(w-target);
+    if(a.file && d<diff){ best=a.file; diff=d; }
+  });
+  return best;
+}
+function normalize(r, label){
+  const f = r.fields || {};
+  return {
+    id: r.id,
+    label: label || r.sectionName || 'News',
+    headline: f.headline || r.webTitle || '',
+    byline: f.byline || '',
+    date: f.firstPublicationDate || r.webPublicationDate || '',
+    thumb: pickImage(r,500) || f.thumbnail || null,
+    hero:  pickImage(r,1200) || f.thumbnail || null,
+    bodyHtml: f.body || ''
+  };
+}
+async function fetchSection(sec){
+  const take = sec.take || 2;
+  const url = 'https://content.guardianapis.com/search'
+    + '?section=' + encodeURIComponent(sec.id)
+    + '&order-by=newest&page-size=' + take
+    + '&show-fields=headline,byline,firstPublicationDate,thumbnail,body'
+    + '&show-elements=image'
+    + (sec.office ? '&production-office=' + encodeURIComponent(sec.office) : '')
+    + '&api-key=' + encodeURIComponent(apiKey);
+  const res = await fetch(url);
+  if(res.status===401 || res.status===403){ const err=new Error('auth'); err.auth=true; throw err; }
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const data = await res.json();
+  const results = (data.response && data.response.results) || [];
+  return results.map(r=>normalize(r, sec.label));
+}
+function interleave(items){
+  const groups = {};
+  items.forEach(it=>{ (groups[it.label]=groups[it.label]||[]).push(it); });
+  const keys = Object.keys(groups); const out=[]; let more=true;
+  while(more){ more=false; keys.forEach(k=>{ if(groups[k].length){ out.push(groups[k].shift()); more=true; } }); }
+  return out;
+}
+async function loadNews(){
+  const settled = await Promise.allSettled(SECTIONS.map(fetchSection));
+  let items = []; let anyOk = false, authFail = false;
+  settled.forEach(s=>{
+    if(s.status==='fulfilled'){ anyOk = true; items = items.concat(s.value); }
+    else if(s.reason && s.reason.auth){ authFail = true; }
+  });
+  if(!anyOk && authFail){ const e=new Error('auth'); e.auth=true; throw e; }
+  if(!items.length) throw new Error('no-items');
+  const seen = new Set();
+  items = items.filter(it=>{ if(!it.id || seen.has(it.id)) return false; seen.add(it.id); return true; });
+  items.sort((a,b)=> new Date(b.date) - new Date(a.date));
+  cache = { items: interleave(items).slice(0, TILE_COUNT), fetchedAt: Date.now() };
+  return cache.items;
+}
+
+/* ---------- helpers ---------- */
+function friendlyDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso), now = new Date();
+  if(d.toDateString()===now.toDateString()) return 'Today';
+  const y = new Date(now); y.setDate(now.getDate()-1);
+  if(d.toDateString()===y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
+}
+function cleanBody(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('a').forEach(a=> a.replaceWith(document.createTextNode(a.textContent)));
+  doc.querySelectorAll('figure, aside, script, style, iframe, .element-rich-link, .element-pullquote, .element-membership, .element-interactive, .element-atom')
+     .forEach(n=> n.remove());
+  return doc.body.innerHTML;
+}
+function imgTag(src){
+  if(!src) return '';
+  return '<img src="'+src+'" alt="" onerror="this.style.display=\'none\'">';
+}
+
+/* ---------- views ---------- */
+function showLoading(msg){
+  view='loading';
+  stage.innerHTML = '<div class="center fade"><div class="spinner"></div><h2>'+(msg||'Loading today&rsquo;s news&hellip;')+'</h2></div>';
+}
+function showError(){
+  view='error';
+  stage.innerHTML =
+    '<div class="center fade">' +
+      '<h2>The news couldn&rsquo;t load just now.</h2>' +
+      '<p>It will try again on its own in a moment. Please make sure the tablet is connected to the internet.</p>' +
+      '<button class="allstories" id="resetup" style="margin-top:10px;">Re-enter Guardian key</button>' +
+    '</div>';
+  document.getElementById('resetup').addEventListener('click', async ()=>{ await clearKey(); showSetup(); });
+  clearTimeout(window.__errTimer);
+  window.__errTimer = setTimeout(init, 15000);
+}
+function showSetup(note){
+  view='setup';
+  stage.innerHTML =
+    '<div class="setup fade">' +
+      '<h2>One-time setup</h2>' +
+      (note ? '<p class="warn">'+note+'</p>' : '') +
+      '<p>This reader needs a free key from The Guardian to fetch the news. Visit ' +
+        '<code>open-platform.theguardian.com/access</code> on any computer, request a developer key ' +
+        '(it arrives right away), then paste it here.</p>' +
+      '<input id="keyInput" type="text" placeholder="Paste the Guardian key here" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<button id="keySave">Save and start</button>' +
+    '</div>';
+  document.getElementById('keySave').addEventListener('click', async ()=>{
+    const v = document.getElementById('keyInput').value.trim();
+    if(!v) return;
+    await saveKey(v);
+    init();
+  });
+}
+function showMosaic(){
+  view='mosaic';
+  const tiles = cache.items.map((s,i)=>
+    '<button class="tile" data-i="'+i+'">' +
+      '<div class="thumb">'+ imgTag(s.thumb) +'</div>' +
+      '<div class="tile-text">' +
+        '<div class="tile-source">'+ s.label +' &middot; '+ friendlyDate(s.date) +'</div>' +
+        '<div class="tile-headline">'+ s.headline +'</div>' +
+      '</div>' +
+    '</button>'
+  ).join('');
+  stage.innerHTML = '<div class="mosaic fade">'+tiles+'</div>';
+  stage.scrollTop = 0;
+  stage.querySelectorAll('.tile').forEach(btn=>{
+    btn.addEventListener('click', ()=> showStory(parseInt(btn.dataset.i,10)));
+  });
+}
+function showStory(i){
+  view='story';
+  const s = cache.items[i];
+  stage.innerHTML =
+    '<div class="story-wrap fade">' +
+      '<button class="allstories" id="topback"><span class="icon">&#9664;</span> All stories</button>' +
+      '<div class="hero">'+ imgTag(s.hero) +'</div>' +
+      '<div class="eyebrow">'+ s.label +' &middot; '+ friendlyDate(s.date) +'</div>' +
+      '<h1 class="headline">'+ s.headline +'</h1>' +
+      (s.byline ? '<p class="byline">'+ s.byline +'</p>' : '') +
+      '<div class="body">'+ cleanBody(s.bodyHtml) +'</div>' +
+      '<button class="more" id="morebtn">Read another news story <span class="icon">&#9654;</span></button>' +
+    '</div>';
+  stage.scrollTop = 0;
+  const back = ()=>{ maybeRefreshThen(showMosaic); };
+  document.getElementById('topback').addEventListener('click', back);
+  document.getElementById('morebtn').addEventListener('click', back);
+}
+
+async function maybeRefreshThen(done){
+  const stale = (Date.now() - cache.fetchedAt) > REFRESH_MINUTES*60000;
+  if(stale){ try{ await loadNews(); }catch(e){} }
+  done();
+}
+
+/* ---------- boot ---------- */
+async function init(){
+  showLoading();
+  const key = await resolveKey();
+  if(!key){ showSetup(); return; }
+  try{
+    await loadNews();
+    showMosaic();
+  }catch(e){
+    if(e && e.auth){ await clearKey(); showSetup('That key didn&rsquo;t work. Please check it and paste it again.'); }
+    else showError();
+  }
+}
+
+setInterval(async ()=>{
+  if(!apiKey) return;
+  try{ await loadNews(); if(view==='mosaic') showMosaic(); }catch(e){}
+}, REFRESH_MINUTES*60000);
+
+init();
+</script>
+</body>
+</html>
